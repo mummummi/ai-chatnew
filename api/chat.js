@@ -26,12 +26,14 @@ export default async function handler(req, res) {
 5. [비계 설정] 대답이 틀렸다면 직접 지적하지 말고 스스로 올바른 생각을 유도하는 '힌트 질문'을 던지세요.`;
 
     try {
-        // 최신 구글 제미나이 모델 (3.0 flash preview) 호출
+        // 최신 구글 제미나이 모델 호출 (공식 규격인 system_instruction 사용)
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                systemInstruction: { parts: [{ text: systemPrompt }] },
+                system_instruction: { 
+                    parts: [{ text: systemPrompt }] 
+                },
                 contents: [
                     ...(history || []), // 이전 대화 기록이 있다면 포함
                     { role: 'user', parts: [{ text: message }] } // 새로운 메시지
