@@ -204,29 +204,69 @@
 
         async function callBackendAPI(userMessage) {
             const loadingId = appendBotMessage('생각하는 중', true);
+            
+            // API 키 확인
+            const apiKey = document.getElementById('apiKeyInput').value.trim();
+            if (!apiKey) {
+                document.getElementById(loadingId).remove();
+                appendSystemMessage("⚙️ 설정에서 API 키를 먼저 입력해주세요!");
+                return;
+            }
+
             try {
-                // Vercel 서버리스 함수 호출
-                const response = await fetch('/api/chat', {
+                // 시스템 프롬프트 동적 생성
+                const systemPrompt = `당신은 '${currentPersona.name}'입니다. 
+당신이 처한 구체적인 상황이나 설명(페르소나)은 다음과 같습니다: [${currentPersona.context}].
+당신과 대화하는 상대는 '초등학교 ${currentPersona.grade}학년' 학생이며, 이 대화는 '${currentPersona.subject}' 교과와 관련된 학습 활동입니다.
+
+다음 원칙을 1순위로 엄격하게 지켜서 응답하세요:
+1. [완벽한 몰입] 설정된 대상(${currentPersona.name})과 상황에 완벽히 빙의하세요. 사물이나 동물이라면 그들의 시선에서 세상을 보고 말하는 것처럼 연기하세요. 절대 AI 모델이라고 밝히지 마세요.
+2. [눈높이 맞춤] 초등학교 ${currentPersona.grade}학년 수준에 맞는 쉬운 어휘를 사용하고, 다정하고 친절한 말투를 유지하세요.
+3. [과목 연계] 가급적 '${currentPersona.subject}' 교과의 학습 목표나 가치(예: 도덕적 성찰, 과학적 탐구, 국어적 표현 등)가 자연스럽게 대화에 녹아들도록 유도하세요.
+4. [안전 및 인성 교육] 학생이 장난을 치거나 부적절한 말을 하면 절대 화내지 말고, ${currentPersona.name}의 성품에 맞게 부드럽게 타이르세요.
+5. [비계(Scaffolding) 설정] 학생의 말이 논점에서 벗어나거나 틀렸다면, 직접 "틀렸다"고 지적하지 말고 스스로 올바른 생각을 할 수 있도록 유도하는 '비계 질문(되묻기, 힌트주기)'을 던져주세요.`;
+
+                // Gemini API 직접 호출 (서버 없이 프론트엔드에서 처리)
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        message: userMessage,
-                        persona: currentPersona,
-                        interactionId: currentInteractionId
+                        systemInstruction: { parts: [{ text: systemPrompt }] },
+                        contents: [
+                            // 이전 대화 기록이 있다면 여기에 추가할 수 있지만, 
+                            // 현재는 단순화를 위해 매번 새로운 메시지만 전송합니다.
+                            // 문맥을 유지하려면 chatHistory 배열을 관리해야 합니다.
+                            { role: 'user', parts: [{ text: userMessage }] }
+                        ]
                     })
                 });
 
                 const data = await response.json();
                 document.getElementById(loadingId).remove();
 
-                if (!response.ok) throw new Error(data.error || '서버 오류가 발생했습니다.');
+                if (!response.ok) {
+                    throw new Error(data.error?.message || 'API 오류가 발생했습니다.');
+                }
                 
-                appendBotMessage(data.reply);
-                currentInteractionId = data.interactionId; // 다음 대화를 위해 ID 저장
+                if (!data.candidates || data.candidates.length === 0) {
+                     throw new Error('유효한 응답을 받지 못했습니다.');
+                }
+
+                const reply = data.candidates[0].content.parts[0].text;
+                appendBotMessage(reply);
 
             } catch (error) {
                 document.getElementById(loadingId).remove();
-                appendBotMessage(`앗, 오류가 발생했어.\n\n[상세 오류]\n${error.message}`);
+                
+                let errorMsg = error.message;
+                 if (errorMsg.includes('402')) {
+                   errorMsg = '결제(크레딧) 문제가 발생했습니다. API 키의 결제 상태를 확인해주세요.';
+                } else if (errorMsg.includes('API_KEY_INVALID')) {
+                   errorMsg = '유효하지 않은 API 키입니다. 키를 다시 확인해주세요.';
+                }
+
+                appendBotMessage(`앗, 오류가 발생했어.\n\n[상세 오류]\n${errorMsg}`);
+                console.error("Chat Error:", error);
             }
         }
 
