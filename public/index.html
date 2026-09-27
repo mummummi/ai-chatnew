@@ -93,7 +93,6 @@
             scroll-behavior: smooth;
         }
 
-        /* 챗봇 메시지 스타일 */
         .message-row-bot {
             display: flex;
             align-items: flex-start;
@@ -139,7 +138,6 @@
             word-break: break-word;
         }
 
-        /* 사용자 메시지 스타일 */
         .message-row-user {
             display: flex;
             align-items: flex-end;
@@ -167,7 +165,6 @@
             margin-bottom: 2px;
         }
 
-        /* 안내 메시지 */
         .system-message {
             background-color: rgba(255, 255, 255, 0.8);
             border-left: 4px solid #fef01b;
@@ -190,7 +187,6 @@
             margin: 10px 0;
         }
 
-        /* 입력 영역 */
         .input-area {
             background-color: #ffffff;
             padding: 10px 15px;
@@ -243,7 +239,6 @@
             box-shadow: none;
         }
 
-        /* 설정 모달 */
         .modal-overlay {
             position: absolute;
             top: 0;
@@ -289,7 +284,6 @@
             box-sizing: border-box;
         }
         
-        /* 타이핑 애니메이션 */
         .typing-indicator {
             display: none;
             align-items: center;
@@ -318,7 +312,6 @@
             40% { transform: scale(1); }
         }
 
-        /* 퀵 버튼 목록 */
         .quick-buttons {
             display: flex;
             gap: 10px;
@@ -369,7 +362,7 @@
         <!-- 헤더 영역 -->
         <div class="header">
             <div class="flex items-center gap-3">
-                <button class="text-blue-800" onclick="alert('뒤로가기 기능은 현재 시뮬레이션입니다.')">
+                <button class="text-blue-800" onclick="showToast('뒤로가기 기능은 현재 시뮬레이션입니다.')">
                     <i class="fas fa-chevron-left"></i>
                 </button>
                 <div class="header-info">
@@ -432,10 +425,10 @@
 
         <!-- 입력 영역 -->
         <div class="input-area">
-            <button class="text-gray-500 hover:text-gray-700" onclick="alert('첨부 기능은 아직 준비 중입니다.')">
+            <button class="text-gray-500 hover:text-gray-700" onclick="showToast('첨부 기능은 아직 준비 중입니다.')">
                 <i class="far fa-smile text-xl"></i>
             </button>
-            <button class="text-gray-500 hover:text-gray-700" onclick="alert('추가 기능은 아직 준비 중입니다.')">
+            <button class="text-gray-500 hover:text-gray-700" onclick="showToast('추가 기능은 아직 준비 중입니다.')">
                 <i class="fas fa-plus text-xl"></i>
             </button>
             <input type="text" id="user-input" class="chat-input" placeholder="세종대왕님께 질문을 입력해보세요..." onkeypress="handleKeyPress(event)">
@@ -511,6 +504,29 @@
         let currentGrade = "4";
         let currentCharacterId = "sejong";
         
+        // 토스트 알림 함수 추가 (기본 alert 대체용)
+        function showToast(message) {
+            let container = document.getElementById('toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'toast-container';
+                container.className = 'fixed bottom-24 left-1/2 transform -translate-x-1/2 z-50 flex flex-col gap-2 pointer-events-none';
+                document.body.appendChild(container);
+            }
+            
+            const toast = document.createElement('div');
+            toast.className = 'bg-gray-800 text-white px-4 py-2 rounded-full shadow-lg text-sm transition-opacity duration-300 opacity-0';
+            toast.textContent = message;
+            container.appendChild(toast);
+            
+            requestAnimationFrame(() => toast.classList.remove('opacity-0'));
+            
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 2500);
+        }
+        
         const characters = {
             sejong: {
                 id: "sejong",
@@ -560,6 +576,7 @@
 
         function openSettings() { document.getElementById('settings-modal').style.display = 'flex'; }
         function closeSettings() { document.getElementById('settings-modal').style.display = 'none'; }
+        
         function updateCharacterPreview() {
             const select = document.getElementById('character-select');
             document.getElementById('custom-character-fields').style.display = select.value === 'custom' ? 'block' : 'none';
@@ -819,8 +836,8 @@ ${gradeInstruction}
             let response;
 
             if (testApiKey) {
-                // 미리보기 및 인라인 테스트용 구글 직통 호출
-                response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${testApiKey}`, {
+                // 미리보기 및 인라인 테스트용 구글 직통 호출 (수정 완료)
+                response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${testApiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
