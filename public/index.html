@@ -3,253 +3,863 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>초등 맞춤 AI 인물 대화방</title>
-    <!-- Tailwind CSS CDN -->
+    <title>에듀톡 - 역사/소설 속 인물과 대화하기</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
-        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f3f4f6; }
-        .chat-bg { background-color: #b2c7d9; }
-        .chat-scroll::-webkit-scrollbar { width: 6px; }
-        .chat-scroll::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.2); border-radius: 3px; }
-        @keyframes pulse-dots {
-            0% { content: "."; }
-            33% { content: ".."; }
-            66% { content: "..."; }
-            100% { content: ""; }
+        
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f3f4f6;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
-        .loading-dots::after { content: "."; animation: pulse-dots 1.5s infinite; }
+
+        .chat-container {
+            width: 100%;
+            max-width: 480px;
+            height: 100vh;
+            max-height: 850px;
+            background-color: #bbdefb;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            position: relative;
+        }
+
+        @media (min-width: 481px) {
+            .chat-container {
+                height: 90vh;
+                border-radius: 20px;
+                overflow: hidden;
+            }
+        }
+
+        .header {
+            background-color: #90caf9;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #64b5f6;
+            z-index: 10;
+        }
+
+        .header-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1e3a8a;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .header-subtitle {
+            font-size: 0.8rem;
+            color: #1e40af;
+        }
+
+        .settings-btn {
+            background: none;
+            border: none;
+            color: #1e3a8a;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 5px;
+            transition: color 0.2s;
+        }
+        
+        .settings-btn:hover {
+            color: #172554;
+        }
+
+        .chat-area {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            scroll-behavior: smooth;
+        }
+
+        /* 챗봇(인물) 메시지 스타일 */
+        .message-row-bot {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 5px;
+        }
+
+        .profile-pic {
+            width: 45px;
+            height: 45px;
+            border-radius: 18px;
+            background-color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .message-content-bot {
+            max-width: 75%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .bot-name {
+            font-size: 0.8rem;
+            color: #4b5563;
+            margin-bottom: 4px;
+            margin-left: 5px;
+        }
+
+        .bubble-bot {
+            background-color: #ffffff;
+            padding: 10px 15px;
+            border-radius: 5px 20px 20px 20px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: #1f2937;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            word-break: break-word;
+        }
+
+        /* 사용자(학생) 메시지 스타일 */
+        .message-row-user {
+            display: flex;
+            align-items: flex-end;
+            justify-content: flex-end;
+            gap: 5px;
+            margin-bottom: 5px;
+            margin-top: 10px;
+        }
+
+        .bubble-user {
+            background-color: #fef01b;
+            padding: 10px 15px;
+            border-radius: 20px 5px 20px 20px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: #1f2937;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            max-width: 75%;
+            word-break: break-word;
+        }
+
+        .time-text {
+            font-size: 0.7rem;
+            color: #6b7280;
+            margin-bottom: 2px;
+        }
+
+        /* 시스템 안내 메시지 */
+        .system-message {
+            background-color: rgba(255, 255, 255, 0.8);
+            border-left: 4px solid #fef01b;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 0.9rem;
+            color: #4b5563;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+
+        .date-badge {
+            background-color: rgba(0, 0, 0, 0.1);
+            color: #4b5563;
+            font-size: 0.75rem;
+            padding: 5px 15px;
+            border-radius: 15px;
+            align-self: center;
+            margin: 10px 0;
+        }
+
+        /* 입력 영역 */
+        .input-area {
+            background-color: #ffffff;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #e5e7eb;
+            border-radius: 25px;
+            font-size: 0.95rem;
+            outline: none;
+            background-color: #f9fafb;
+            transition: border-color 0.2s;
+        }
+
+        .chat-input:focus {
+            border-color: #93c5fd;
+            background-color: #ffffff;
+        }
+
+        .send-btn {
+            background-color: #fef01b;
+            color: #1f2937;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            font-size: 1.2rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.1s, background-color 0.2s;
+        }
+
+        .send-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .send-btn:disabled {
+            background-color: #e5e7eb;
+            color: #9ca3af;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* 설정 모달창 */
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+            border-radius: inherit;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 25px;
+            border-radius: 15px;
+            width: 85%;
+            max-width: 350px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 5px;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            outline: none;
+            box-sizing: border-box;
+        }
+        
+        /* 타이핑 인디케이터 */
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 4px;
+            padding: 12px 18px;
+            background-color: #ffffff;
+            border-radius: 5px 20px 20px 20px;
+            width: fit-content;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            margin-bottom: 10px;
+        }
+
+        .dot {
+            width: 6px;
+            height: 6px;
+            background-color: #9ca3af;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .dot:nth-child(1) { animation-delay: -0.32s; }
+        .dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        /* 퀵 버튼 목록 */
+        .quick-buttons {
+            display: flex;
+            gap: 10px;
+            padding: 10px 15px;
+            overflow-x: auto;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-top: 1px solid rgba(255, 255, 255, 0.3);
+            scrollbar-width: none;
+        }
+        .quick-buttons::-webkit-scrollbar {
+            display: none;
+        }
+
+        .quick-btn {
+            background-color: white;
+            border: 1px solid #e5e7eb;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            color: #4b5563;
+            white-space: nowrap;
+            cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .quick-btn:hover {
+            background-color: #f3f4f6;
+            border-color: #d1d5db;
+        }
+        
+        .api-status {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            background-color: #22c55e;
+        }
     </style>
 </head>
-<body class="h-screen flex items-center justify-center m-0 bg-gray-100">
+<body>
 
-    <div class="w-full h-full sm:w-[450px] sm:h-[92vh] chat-bg flex flex-col shadow-2xl sm:rounded-3xl overflow-hidden border border-gray-300 relative">
+    <div class="chat-container">
         
-        <!-- 상단 헤더 -->
-        <div class="bg-white/95 backdrop-blur-sm px-4 py-3 flex items-center justify-between border-b border-gray-200 z-10 shrink-0 shadow-sm">
-            <div class="flex items-center space-x-3 max-w-[70%]">
-                <div class="w-10 h-10 rounded-full bg-amber-700 flex items-center justify-center text-white font-bold text-lg shadow-inner overflow-hidden border-2 border-amber-500 shrink-0 transition-colors duration-300" id="charAvatar">
-                    세
-                </div>
-                <div class="truncate">
-                    <div class="font-bold text-gray-800 flex items-center gap-1 text-[15px] truncate">
-                        <span id="charNameDisplay" class="truncate">세종대왕</span>
-                        <svg class="w-4 h-4 text-blue-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+        <!-- 헤더 영역 -->
+        <div class="header">
+            <div class="flex items-center gap-3">
+                <button class="text-blue-800" onclick="alert('뒤로가기 기능은 현재 시뮬레이션입니다.')">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <div class="header-info">
+                    <div class="header-title">
+                        <span id="header-character-name">세종대왕님</span>
+                        <i class="fas fa-check-circle text-blue-500 text-sm"></i>
                     </div>
-                    <div class="text-[11px] text-gray-500 flex items-center gap-1 truncate">
-                        <span class="w-2 h-2 rounded-full bg-green-500 shrink-0"></span>
-                        <span id="headerContextDisplay" class="truncate">조선의 제4대 왕</span>
+                    <div class="header-subtitle" id="header-character-desc">
+                        백성을 사랑하는 조선의 제4대 왕
                     </div>
                 </div>
             </div>
-            <button onclick="toggleSettings()" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-full font-bold transition flex items-center gap-1 shadow-sm border border-gray-200 shrink-0">
-                ⚙️ 설정
+            <button class="settings-btn flex items-center gap-2 text-sm bg-white/50 px-3 py-1.5 rounded-full border border-blue-200" onclick="openSettings()">
+                <i class="fas fa-key text-yellow-600"></i> 설정 <span class="api-status"></span>
             </button>
-        </div>
-
-        <!-- 설정 패널 (기본 숨김) -->
-        <div id="settingsPanel" class="bg-white p-4 border-b border-gray-200 text-sm flex flex-col gap-3 hidden absolute top-[60px] left-0 w-full h-[calc(100%-60px)] z-30 shadow-lg overflow-y-auto">
-            <h3 class="font-bold text-lg text-gray-800 border-b pb-2 mb-1">대화 설정</h3>
-            
-            <div class="flex gap-2">
-                <div class="w-1/2">
-                    <label class="font-bold text-gray-700 block mb-1 text-xs">👤 학생 학년</label>
-                    <select id="gradeSelect" class="w-full p-2 text-xs border border-gray-300 rounded-md bg-gray-50">
-                        <option value="1">초등 1학년</option><option value="2">초등 2학년</option>
-                        <option value="3">초등 3학년</option><option value="4" selected>초등 4학년</option>
-                        <option value="5">초등 5학년</option><option value="6">초등 6학년</option>
-                    </select>
-                </div>
-                <div class="w-1/2">
-                    <label class="font-bold text-gray-700 block mb-1 text-xs">📚 관련 교과</label>
-                    <select id="subjectSelect" class="w-full p-2 text-xs border border-gray-300 rounded-md bg-gray-50">
-                        <option value="도덕">도덕</option><option value="국어" selected>국어</option>
-                        <option value="사회">사회</option><option value="과학">과학</option>
-                        <option value="수학">수학</option><option value="실과">실과</option>
-                        <option value="창의적 체험활동">창체/기타</option>
-                    </select>
-                </div>
-            </div>
-
-            <div>
-                <label class="font-bold text-gray-700 block mb-1 text-xs">🎭 대화할 대상 (인물, 동물, 사물 모두 가능)</label>
-                <input type="text" id="characterInput" value="세종대왕" placeholder="예: 흥부, 북극곰, 현미경" class="w-full p-2 text-xs border border-gray-300 rounded-md bg-gray-50 outline-none">
-            </div>
-
-            <div>
-                <label class="font-bold text-gray-700 block mb-1 text-xs">📖 대상의 상황 또는 설명 (페르소나 부여)</label>
-                <textarea id="contextInput" rows="2" placeholder="예: 지구 온난화로 빙하가 녹아 슬퍼하는 북극곰" class="w-full p-2 text-xs border border-gray-300 rounded-md bg-gray-50 outline-none resize-none">조선의 제4대 왕이자 훈민정음을 창제한 어진 임금</textarea>
-            </div>
-
-            <div class="mt-auto pt-4 flex gap-2">
-                <button onclick="toggleSettings()" class="w-1/3 bg-gray-200 text-gray-700 py-2.5 rounded-md text-xs font-bold hover:bg-gray-300 transition">취소</button>
-                <button onclick="applySettings()" class="w-2/3 bg-amber-500 text-white py-2.5 rounded-md text-xs font-bold hover:bg-amber-600 transition shadow-md">✨ 적용하고 대화 새로 시작</button>
-            </div>
         </div>
 
         <!-- 채팅 메시지 영역 -->
-        <div id="chatBox" class="flex-1 p-4 overflow-y-auto chat-scroll flex flex-col space-y-4 pb-4">
-            <div class="flex justify-center my-2">
-                <span class="bg-black/10 text-white px-3 py-1 rounded-full text-[10px]">오늘 (새로운 만남)</span>
+        <div class="chat-area" id="chat-messages">
+            <div class="date-badge" id="current-date-badge">
+                <i class="far fa-calendar-alt"></i> 오늘 (경복궁 집현전)
             </div>
-            <div class="bg-white/90 border border-amber-200 text-gray-700 p-4 rounded-xl text-xs shadow-sm leading-relaxed mx-2">
-                <div class="font-bold text-amber-700 flex items-center gap-1 mb-2">
-                    <span>📜</span> 대화 안내
+
+            <div class="system-message" id="intro-system-message">
+                <div class="font-bold text-yellow-700 mb-1"><i class="fas fa-bullhorn"></i> <span id="intro-title">AI 세종대왕님과의 대화 안내</span></div>
+                <div id="intro-content">안녕! 나는 조선의 제4대 왕 세종대왕이란다. 훈민정음이나 측우기, 해시계, 좋아하는 음식 등 무엇이든 편하게 물어보렴. 고운 말로 대답해 주마!</div>
+            </div>
+
+            <!-- 초기 봇 메시지 -->
+            <div class="message-row-bot">
+                <div class="profile-pic" id="bot-profile-pic">
+                    <span style="font-family: '궁서', serif; color: #b91c1c; font-weight: bold; font-size: 1.2rem;">世<br>宗</span>
                 </div>
-                설정(⚙️)을 눌러 만나고 싶은 인물, 동물, 사물을 설정하고 이야기를 나눠보세요!
+                <div class="message-content-bot">
+                    <div class="bot-name" id="bot-name-label">세종대왕님</div>
+                    <div class="bubble-bot" id="initial-greeting">
+                        다시 새로이 대화를 시작하는구나!<br>
+                        나의 귀한 어린 백성아, 이번에는 어떤 이야기로 마음을 나눠볼까?
+                    </div>
+                </div>
             </div>
+            
+            <!-- 타이핑 인디케이터 -->
+            <div class="message-row-bot" id="typing-container" style="display: none;">
+                <div class="profile-pic" id="bot-profile-pic-typing"></div>
+                <div class="message-content-bot">
+                    <div class="bot-name" id="bot-name-typing">...</div>
+                    <div class="typing-indicator" style="display: flex;">
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                    </div>
+                </div>
+            </div>
+            <div id="chat-bottom"></div>
         </div>
 
-        <!-- 추천 질문 -->
-        <div class="bg-white/40 backdrop-blur-md px-2 py-2 flex gap-2 overflow-x-auto chat-scroll scroll-smooth whitespace-nowrap border-t border-white/50" id="suggestionBox"></div>
+        <!-- 퀵 질문 버튼 -->
+        <div class="quick-buttons" id="quick-buttons-container"></div>
 
-        <!-- 하단 입력 영역 -->
-        <div class="bg-white p-3 flex items-center space-x-2 border-t border-gray-200 z-10 shrink-0">
-            <input type="text" id="messageInput" placeholder="질문을 입력해보세요..." class="flex-1 bg-gray-100 text-[13px] px-4 py-2.5 rounded-full outline-none focus:bg-gray-200 transition border border-transparent focus:border-gray-300" onkeypress="if(event.key === 'Enter') handleUserMessage()">
-            <button onclick="handleUserMessage()" class="bg-[#ffeb33] hover:bg-[#fada0a] text-gray-800 w-9 h-9 rounded-full flex items-center justify-center font-bold shadow-sm transition shrink-0">
-                <svg class="w-5 h-5 transform rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+        <!-- 입력 영역 -->
+        <div class="input-area">
+            <button class="text-gray-500 hover:text-gray-700" onclick="alert('첨부 기능은 아직 준비 중입니다.')">
+                <i class="far fa-smile text-xl"></i>
+            </button>
+            <button class="text-gray-500 hover:text-gray-700" onclick="alert('추가 기능은 아직 준비 중입니다.')">
+                <i class="fas fa-plus text-xl"></i>
+            </button>
+            <input type="text" id="user-input" class="chat-input" placeholder="세종대왕님께 질문을 입력해보세요..." onkeypress="handleKeyPress(event)">
+            <button class="send-btn" id="send-button" onclick="sendMessage()">
+                <i class="fas fa-arrow-up"></i>
             </button>
         </div>
+
+        <!-- 설정 모달 -->
+        <div class="modal-overlay" id="settings-modal">
+            <div class="modal-content">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold text-gray-800">에듀톡 설정</h2>
+                    <button onclick="closeSettings()" class="text-gray-500 hover:text-gray-700"><i class="fas fa-times"></i></button>
+                </div>
+                
+                <div class="bg-blue-50 p-3 rounded-lg text-sm text-blue-800 mb-4">
+                    선생님 모드입니다. 학생들을 위한 대화 환경을 설정해주세요.
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">학생 학년 설정</label>
+                    <select id="grade-select" class="form-select">
+                        <option value="1">초등학교 1학년 (매우 쉬운 어휘, 친절함)</option>
+                        <option value="2">초등학교 2학년 (쉬운 어휘, 친절함)</option>
+                        <option value="3">초등학교 3학년 (기초 어휘, 구체적 예시)</option>
+                        <option value="4" selected>초등학교 4학년 (보통 수준)</option>
+                        <option value="5">초등학교 5학년 (역사적 사실 포함)</option>
+                        <option value="6">초등학교 6학년 (논리적 사고 유도)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">대화할 인물 선택</label>
+                    <select id="character-select" class="form-select" onchange="updateCharacterPreview()">
+                        <option value="sejong" selected>세종대왕 (조선 4대 왕)</option>
+                        <option value="leesoonsin">이순신 (조선 중기 무신)</option>
+                        <option value="gildong">홍길동 (고전소설 인물)</option>
+                        <option value="custom">직접 입력...</option>
+                    </select>
+                </div>
+
+                <div id="custom-character-fields" style="display: none;" class="mt-2 p-3 bg-gray-50 rounded border border-gray-200">
+                    <div class="form-group mb-2">
+                        <label class="form-label text-xs">인물 이름</label>
+                        <input type="text" id="custom-name" class="form-input text-sm" placeholder="예: 안중근">
+                    </div>
+                    <div class="form-group mb-2">
+                        <label class="form-label text-xs">한 줄 소개</label>
+                        <input type="text" id="custom-desc" class="form-input text-sm" placeholder="예: 대한제국의 독립운동가">
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="form-label text-xs">인물 성격/배경 (프롬프트용)</label>
+                        <textarea id="custom-persona" class="form-input text-sm h-20" placeholder="예: 독립을 향한 강한 의지가 있으며..."></textarea>
+                    </div>
+                </div>
+
+                <div class="form-group mt-4 border-t pt-4">
+                    <label class="form-label text-red-600"><i class="fas fa-exclamation-circle"></i> 테스트용 API 키 (미리보기 환경용)</label>
+                    <input type="password" id="test-api-key" class="form-input text-sm" placeholder="AIzaSy... (입력 시 백엔드 대신 직접 통신)">
+                    <p class="text-xs text-gray-500 mt-1">Vercel 배포 전 로컬/미리보기에서 테스트할 때만 사용하세요.</p>
+                </div>
+
+                <button class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg mt-4 transition-colors" onclick="saveSettings()">
+                    설정 저장 및 시작하기
+                </button>
+            </div>
+        </div>
+
     </div>
 
     <script>
+        // 전역 상태
         let chatHistory = [];
-        let currentPersona = {
-            name: '세종대왕',
-            context: '조선의 제4대 왕이자 훈민정음을 창제한 어진 임금',
-            grade: '4',
-            subject: '국어',
-            colorClass: 'bg-amber-700'
+        let currentGrade = "4";
+        let currentCharacterId = "sejong";
+        
+        const characters = {
+            sejong: {
+                id: "sejong",
+                name: "세종대왕님",
+                desc: "백성을 사랑하는 조선의 제4대 왕",
+                place: "경복궁 집현전",
+                iconHtml: `<span style="font-family: '궁서', serif; color: #b91c1c; font-weight: bold; font-size: 1.2rem;">世<br>宗</span>`,
+                introTitle: "AI 세종대왕님과의 대화 안내",
+                introText: "안녕! 나는 조선의 제4대 왕 세종대왕이란다. 훈민정음이나 측우기, 해시계, 좋아하는 음식 등 무엇이든 편하게 물어보렴. 고운 말로 대답해 주마!",
+                greeting: "다시 새로이 대화를 시작하는구나!\n나의 귀한 어린 백성아, 이번에는 어떤 이야기로 마음을 나눠볼까?",
+                quickButtons: [
+                    { text: "훈민정음 이야기", prompt: "훈민정음은 왜 만드셨나요?", icon: '<i class="fas fa-book text-yellow-600"></i>' },
+                    { text: "좋아하는 음식", prompt: "전하께서 제일 좋아하시는 음식은 무엇인가요?", icon: '<i class="fas fa-drumstick-bite text-red-500"></i>' },
+                    { text: "과학자 장영실", prompt: "장영실은 어떤 사람인가요?", icon: '<i class="fas fa-cogs text-purple-500"></i>' }
+                ],
+                persona: `당신은 조선의 제4대 왕 '세종대왕'입니다. 
+백성을 극진히 사랑하는 따뜻하고 인자한 성품을 가졌습니다.
+학생들을 '나의 귀한 어린 백성' 또는 '총명한 학동' 등으로 부르며 자상하게 대합니다.
+말투는 사극에서 왕이 쓰는 부드러운 하대(예: ~하느냐, ~단다, ~구나, ~마)를 사용하되, 현대 초등학생들이 이해하기 쉽게 풀어써야 합니다.`
+            },
+            leesoonsin: {
+                id: "leesoonsin",
+                name: "이순신 장군님",
+                desc: "조선을 구한 성웅",
+                place: "전라좌수영 본영",
+                iconHtml: `<i class="fas fa-ship text-blue-800 text-2xl"></i>`,
+                introTitle: "AI 이순신 장군님과의 대화 안내",
+                introText: "반갑다. 나는 조선의 수군을 이끄는 삼도수군통제사 이순신이다. 거북선이나 학익진 등 바다에서 있었던 일이라면 무엇이든 물어보아라.",
+                greeting: "바다의 바람이 몹시 찬데, 용기 있게 나를 찾아왔구나.\n어린 백성이여, 무엇이 궁금하여 내게 왔느냐?",
+                quickButtons: [
+                    { text: "거북선 비밀", prompt: "거북선은 어떻게 만드셨나요?", icon: '<i class="fas fa-shield-alt text-gray-600"></i>' },
+                    { text: "명량해전", prompt: "12척의 배로 어떻게 이기셨나요?", icon: '<i class="fas fa-water text-blue-500"></i>' },
+                    { text: "난중일기", prompt: "일기는 왜 매일 쓰셨나요?", icon: '<i class="fas fa-pencil-alt text-yellow-700"></i>' }
+                ],
+                persona: `당신은 조선 중기의 명장 '이순신' 장군입니다. 엄격하지만 따뜻한 어조를 사용합니다.`
+            }
         };
 
-        function escapeHtml(text) { return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
-        function scrollToBottom() { const chatBox = document.getElementById('chatBox'); chatBox.scrollTop = chatBox.scrollHeight; }
-        function toggleSettings() { document.getElementById('settingsPanel').classList.toggle('hidden'); }
-        
-        function getAvatarColor(name) {
-            const colors = ['bg-amber-700', 'bg-blue-600', 'bg-green-600', 'bg-purple-600', 'bg-rose-600', 'bg-teal-600', 'bg-indigo-600'];
-            let hash = 0; for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-            return colors[Math.abs(hash) % colors.length];
+        let customCharacter = null;
+
+        window.onload = function() {
+            const now = new Date();
+            const dateString = `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일`;
+            document.getElementById('current-date-badge').innerHTML = `<i class="far fa-calendar-alt"></i> ${dateString} (<span id="place-name">경복궁 집현전</span>)`;
+            applyCharacter(currentCharacterId);
+        };
+
+        function openSettings() { document.getElementById('settings-modal').style.display = 'flex'; }
+        function closeSettings() { document.getElementById('settings-modal').style.display = 'none'; }
+        function updateCharacterPreview() {
+            const select = document.getElementById('character-select');
+            document.getElementById('custom-character-fields').style.display = select.value === 'custom' ? 'block' : 'none';
         }
 
-        function updateSuggestions(name) {
-            const sugBox = document.getElementById('suggestionBox'); sugBox.innerHTML = '';
-            let sugs = [];
-            if (name.includes('세종')) sugs = ['훈민정음은 왜 만드셨나요?', '제일 좋아하셨던 음식은?'];
-            else if (name.includes('이순신')) sugs = ['거북선은 어떻게 만드셨나요?', '명량해전 때 무섭지 않으셨나요?'];
-            else if (name.includes('북극곰') || name.includes('동물')) sugs = ['지금 기분이 어때?', '내가 널 위해 무엇을 도와줄까?'];
-            else sugs = ['안녕? 넌 누구야?', '너만의 특별한 점을 알려줘!', '나한테 해주고 싶은 이야기 있어?'];
+        function saveSettings() {
+            currentGrade = document.getElementById('grade-select').value;
+            const charSelect = document.getElementById('character-select').value;
 
-            sugs.forEach(text => {
-                const btn = document.createElement('button');
-                btn.onclick = () => { document.getElementById('messageInput').value = text; handleUserMessage(); };
-                btn.className = 'bg-white/90 text-gray-700 px-3 py-1.5 rounded-full text-[11px] border border-gray-300 shadow-sm flex items-center gap-1 shrink-0 font-medium';
-                btn.innerHTML = `<span class="text-blue-500">💬</span> ${text}`;
-                sugBox.appendChild(btn);
+            if (charSelect === 'custom') {
+                const name = document.getElementById('custom-name').value.trim() || '이름 모를 위인';
+                customCharacter = {
+                    id: "custom",
+                    name: name,
+                    desc: document.getElementById('custom-desc').value.trim() || '직접 만든 인물',
+                    place: "어느 멋진 곳",
+                    iconHtml: `<i class="fas fa-user-circle text-gray-500 text-3xl"></i>`,
+                    introTitle: `AI ${name}님과의 대화 안내`,
+                    introText: `안녕! 나는 ${name}이야. 나에 대해 궁금한 것이 있다면 자유롭게 물어봐.`,
+                    greeting: `반가워! 새로운 대화를 시작해보자. 어떤 이야기를 나누고 싶니?`,
+                    quickButtons: [{ text: "인사하기", prompt: "안녕하세요! 자기소개 부탁드려요.", icon: '<i class="fas fa-hand-paper text-yellow-500"></i>' }],
+                    persona: document.getElementById('custom-persona').value.trim() || '친절하게 대답하는 사람입니다.'
+                };
+                currentCharacterId = "custom";
+            } else {
+                currentCharacterId = charSelect;
+            }
+
+            applyCharacter(currentCharacterId);
+            closeSettings();
+            resetChat();
+        }
+
+        function getActiveCharacter() {
+            return (currentCharacterId === 'custom' && customCharacter) ? customCharacter : characters[currentCharacterId];
+        }
+
+        function applyCharacter(charId) {
+            const char = getActiveCharacter();
+            document.getElementById('header-character-name').textContent = char.name;
+            document.getElementById('header-character-desc').textContent = char.desc;
+            document.getElementById('place-name').textContent = char.place;
+            document.getElementById('user-input').placeholder = `${char.name}께 질문을 입력해보세요...`;
+            document.getElementById('intro-title').textContent = char.introTitle;
+            document.getElementById('intro-content').textContent = char.introText;
+            document.getElementById('bot-profile-pic').innerHTML = char.iconHtml;
+            document.getElementById('bot-name-label').textContent = char.name;
+            document.getElementById('initial-greeting').innerHTML = char.greeting.replace(/\n/g, '<br>');
+            document.getElementById('bot-profile-pic-typing').innerHTML = char.iconHtml;
+            document.getElementById('bot-name-typing').textContent = char.name;
+
+            const btnContainer = document.getElementById('quick-buttons-container');
+            btnContainer.innerHTML = '';
+            char.quickButtons.forEach(btn => {
+                const buttonEl = document.createElement('button');
+                buttonEl.className = 'quick-btn';
+                buttonEl.onclick = () => sendQuickMessage(btn.prompt);
+                buttonEl.innerHTML = `${btn.icon} ${btn.text}`;
+                btnContainer.appendChild(buttonEl);
             });
         }
 
-        function updateHeaderUI() {
-            document.getElementById('charNameDisplay').innerText = currentPersona.name;
-            document.getElementById('headerContextDisplay').innerText = currentPersona.context;
-            const avatar = document.getElementById('charAvatar');
-            avatar.innerText = currentPersona.name.charAt(0);
-            avatar.className = `w-10 h-10 rounded-full ${currentPersona.colorClass} flex items-center justify-center text-white font-bold text-lg shadow-inner overflow-hidden border-2 border-white shrink-0`;
-            updateSuggestions(currentPersona.name);
+        function resetChat() {
+            chatHistory = [];
+            const chatArea = document.getElementById('chat-messages');
+            const elementsToRemove = chatArea.querySelectorAll('.message-row-user, .message-row-bot.dynamic-msg');
+            elementsToRemove.forEach(el => el.remove());
         }
 
-        async function applySettings() {
-            const nameInput = document.getElementById('characterInput').value.trim();
-            if (!nameInput) return alert("대화할 대상의 이름을 입력해주세요!");
-
-            currentPersona = {
-                name: nameInput,
-                context: document.getElementById('contextInput').value.trim(),
-                grade: document.getElementById('gradeSelect').value,
-                subject: document.getElementById('subjectSelect').value,
-                colorClass: getAvatarColor(nameInput)
-            };
-            
-            updateHeaderUI();
-            toggleSettings();
-            
-            const chatBox = document.getElementById('chatBox');
-            chatBox.innerHTML = `<div class="flex justify-center my-2"><span class="bg-black/10 text-white px-3 py-1 rounded-full text-[10px]">새로운 만남 시작</span></div>`;
-            chatHistory = []; 
-
-            await sendToBackend("안녕? 나에게 먼저 다정하게 첫인사를 건네줘.");
+        function formatTime() {
+            const now = new Date();
+            let hours = now.getHours();
+            const ampm = hours >= 12 ? '오후' : '오전';
+            hours = hours % 12 || 12;
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            return `${ampm} ${hours}:${minutes}`;
         }
 
-        function appendMessage(role, text, isLoading = false, customId = null) {
-            const chatBox = document.getElementById('chatBox');
-            const div = document.createElement('div');
-            const id = customId || ('msg-' + Date.now() + '-' + Math.random().toString(36.2));
-            div.id = id;
+        function scrollToBottom() {
+            const chatArea = document.getElementById('chat-messages');
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
 
-            if (role === 'user') {
-                div.className = 'flex justify-end mt-2';
-                div.innerHTML = `<div class="bg-[#ffeb33] text-gray-900 p-3 rounded-2xl rounded-tr-sm max-w-[240px] text-[13px] shadow-sm whitespace-pre-wrap">${escapeHtml(text)}</div>`;
-            } else {
-                div.className = 'flex items-start space-x-2 mt-3';
-                let contentHtml = isLoading ? `<span class="loading-dots text-gray-400 font-bold">${text}</span>` : escapeHtml(text).replace(/\n/g, '<br>');
-                div.innerHTML = `
-                    <div class="w-9 h-9 rounded-full ${currentPersona.colorClass} text-white flex items-center justify-center text-sm font-bold shrink-0 shadow-sm">${currentPersona.name.charAt(0)}</div>
-                    <div class="flex flex-col max-w-[75%]">
-                        <span class="text-[11px] text-gray-600 mb-1 ml-1 font-medium">${currentPersona.name}</span>
-                        <div class="bg-white p-3 rounded-2xl rounded-tl-sm shadow-sm text-[13px] text-gray-800 ${isLoading ? 'animate-pulse' : 'whitespace-pre-wrap'}">${contentHtml}</div>
-                    </div>`;
-            }
-            chatBox.appendChild(div);
+        function appendUserMessage(text) {
+            const chatArea = document.getElementById('chat-messages');
+            const typingContainer = document.getElementById('typing-container');
+            
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'message-row-user';
+            
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'time-text';
+            timeDiv.textContent = formatTime();
+            
+            const bubbleDiv = document.createElement('div');
+            bubbleDiv.className = 'bubble-user';
+            bubbleDiv.textContent = text;
+            
+            msgDiv.appendChild(timeDiv);
+            msgDiv.appendChild(bubbleDiv);
+            
+            chatArea.insertBefore(msgDiv, typingContainer);
             scrollToBottom();
-            return id;
         }
 
-        async function handleUserMessage() {
-            const messageInput = document.getElementById('messageInput');
-            const message = messageInput.value.trim();
-            if (!message) return;
+        function appendBotMessage(text) {
+            const char = getActiveCharacter();
+            const chatArea = document.getElementById('chat-messages');
+            const typingContainer = document.getElementById('typing-container');
             
-            appendMessage('user', message);
-            messageInput.value = '';
-            await sendToBackend(message);
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'message-row-bot dynamic-msg';
+            
+            const profileDiv = document.createElement('div');
+            profileDiv.className = 'profile-pic';
+            profileDiv.innerHTML = char.iconHtml;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content-bot';
+            
+            const nameDiv = document.createElement('div');
+            nameDiv.className = 'bot-name';
+            nameDiv.textContent = char.name;
+            
+            const bubbleDiv = document.createElement('div');
+            bubbleDiv.className = 'bubble-bot';
+            
+            // 💡 마크다운 기호 제거 로직 추가
+            // ** 굵게 표시 제거, # 등 불필요한 기호 제거
+            let cleanText = text.replace(/\*\*(.*?)\*\*/g, '$1'); // **텍스트** -> 텍스트 로 변경 (볼드 효과 없앰)
+            cleanText = cleanText.replace(/#/g, ''); // # 기호 제거
+            cleanText = cleanText.replace(/\*/g, ''); // 혹시 남은 * 기호 제거
+            cleanText = cleanText.replace(/\n/g, '<br>'); // 줄바꿈 처리
+            
+            bubbleDiv.innerHTML = cleanText;
+            
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'time-text';
+            timeDiv.style.marginLeft = '5px';
+            timeDiv.textContent = formatTime();
+            
+            contentDiv.appendChild(nameDiv);
+            contentDiv.appendChild(bubbleDiv);
+            
+            const timeWrapper = document.createElement('div');
+            timeWrapper.style.display = 'flex';
+            timeWrapper.style.alignItems = 'flex-end';
+            timeWrapper.appendChild(timeDiv);
+
+            msgDiv.appendChild(profileDiv);
+            msgDiv.appendChild(contentDiv);
+            msgDiv.appendChild(timeWrapper);
+            
+            chatArea.insertBefore(msgDiv, typingContainer);
+            scrollToBottom();
         }
 
-        async function sendToBackend(userMessage) {
-            const loadingId = appendMessage('bot', '생각하는 중', true);
+        function showTypingIndicator() {
+            document.getElementById('typing-container').style.display = 'flex';
+            scrollToBottom();
+        }
+
+        function hideTypingIndicator() {
+            document.getElementById('typing-container').style.display = 'none';
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') sendMessage();
+        }
+
+        function sendQuickMessage(text) {
+            document.getElementById('user-input').value = text;
+            sendMessage();
+        }
+
+        async function sendMessage() {
+            const inputEl = document.getElementById('user-input');
+            const text = inputEl.value.trim();
+            const sendBtn = document.getElementById('send-button');
+            
+            if (!text) return;
+
+            appendUserMessage(text);
+            inputEl.value = '';
+            inputEl.disabled = true;
+            sendBtn.disabled = true;
+            
+            showTypingIndicator();
+            chatHistory.push({ role: "user", parts: [{ text: text }] });
 
             try {
-                const response = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        message: userMessage,
-                        persona: currentPersona,
-                        history: chatHistory
-                    })
-                });
-
-                const data = await response.json();
+                const responseText = await callBackendProxyAPI();
                 
-                // 확실하게 로딩 말풍선 제거
-                const loadingElement = document.getElementById(loadingId);
-                if (loadingElement) loadingElement.remove();
-
-                if (!response.ok) throw new Error(data.error || '통신 오류');
-
-                appendMessage('bot', data.reply);
+                hideTypingIndicator();
+                appendBotMessage(responseText);
+                chatHistory.push({ role: "model", parts: [{ text: responseText }] });
                 
-                chatHistory.push({ role: 'user', parts: [{ text: userMessage }] });
-                chatHistory.push({ role: 'model', parts: [{ text: data.reply }] });
-
             } catch (error) {
-                const loadingElement = document.getElementById(loadingId);
-                if (loadingElement) loadingElement.remove();
+                hideTypingIndicator();
+                console.error("Error:", error);
                 
-                appendMessage('bot', `앗, 오류가 발생했어.\n[상세 오류] ${error.message}`);
+                const errorMsg = document.createElement('div');
+                errorMsg.className = 'system-message';
+                errorMsg.innerHTML = `<i class="fas fa-exclamation-triangle text-red-500"></i> 연결에 실패했어요. 선생님께 설정을 확인해달라고 부탁해보세요. <br><span class="text-xs text-gray-500">(${error.message})</span>`;
+                document.getElementById('chat-messages').insertBefore(errorMsg, document.getElementById('typing-container'));
+                scrollToBottom();
+                
+                chatHistory.pop();
+            } finally {
+                inputEl.disabled = false;
+                sendBtn.disabled = false;
+                inputEl.focus();
             }
         }
 
-        window.onload = updateHeaderUI;
+        async function callBackendProxyAPI() {
+            const char = getActiveCharacter();
+            
+            let gradeInstruction = "";
+            switch(currentGrade) {
+                case "1": gradeInstruction = "대상은 초등학교 1학년(8살)입니다. 아주 짧고 쉬운 단어로, 다정하게 대답하세요. 최대 2문장으로 끝내세요."; break;
+                case "2": gradeInstruction = "대상은 초등학교 2학년(9살)입니다. 쉬운 단어와 구체적인 예시를 들어 짧게 대답하세요. 최대 3문장으로 끝내세요."; break;
+                case "3": gradeInstruction = "대상은 초등학교 3학년(10살)입니다. 초등학교 기초 어휘를 사용하여 간결하게 대답하세요. 최대 3~4문장으로 끝내세요."; break;
+                case "4": gradeInstruction = "대상은 초등학교 4학년(11살)입니다. 묻는 말에만 간결하고 명확하게 대답하세요. 최대 4문장을 넘지 마세요."; break;
+                case "5": gradeInstruction = "대상은 초등학교 5학년(12살)입니다. 핵심 내용 위주로 역사적 사실을 간결하게 설명하세요. 긴 설명을 피하고 최대 4문장으로 요약하세요."; break;
+                case "6": gradeInstruction = "대상은 초등학교 6학년(13살)입니다. 논리적 사고를 유도하되, 장황한 설명은 피하고 핵심만 짚어 짧게 대답하세요. 4~5문장을 넘지 마세요."; break;
+                default: gradeInstruction = "대상은 초등학생입니다. 눈높이에 맞춰 짧고 간결하게 대답해주세요.";
+            }
+
+            // 💡 시스템 프롬프트 대폭 수정: 길이 제한 강화 및 마크다운 금지 지시
+            const systemPrompt = `
+당신은 교육용 챗봇입니다. 아래의 인물 역할을 철저히 연기해야 합니다.
+
+[캐릭터 설정]
+${char.persona}
+
+[학생 수준에 맞춘 길이 및 어휘 조절]
+${gradeInstruction}
+
+[★ 엄격한 작성 가이드라인 ★]
+1. 분량 제한: 모바일 채팅창 화면에 맞게 **반드시 짧게** 대답하세요. (불필요한 배경 설명 생략)
+2. 마크다운 사용 금지: 대답에 **굵은 글씨(**)**, 기호(#, *) 등 어떠한 특수 기호도 절대 사용하지 마세요. 오직 순수한 텍스트만 출력하세요.
+3. 인공지능 언급 금지: 자신을 챗봇이나 인공지능이라고 절대 밝히지 마세요.
+4. 부적절한 질문: 역할에 맞게 부드럽게 타이르고 화제를 돌리세요.
+`;
+
+            const payload = {
+                contents: chatHistory,
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                },
+                generationConfig: {
+                    temperature: 0.6, // 답변의 일관성을 위해 살짝 낮춤
+                    maxOutputTokens: 250, // 최대 생성 토큰 수도 대폭 줄여서 긴 답변 방지
+                }
+            };
+
+            const testApiKey = document.getElementById('test-api-key') ? document.getElementById('test-api-key').value.trim() : '';
+            let response;
+
+            if (testApiKey) {
+                // 미리보기 환경에서 직접 API 호출
+                response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${testApiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            } else {
+                // 미리보기(blob/file) 환경이면서 API 키가 없는 경우 에러 처리
+                if (window.location.protocol === 'blob:' || window.location.protocol === 'file:') {
+                    throw new Error("미리보기 화면에서는 백엔드에 연결할 수 없습니다. 우측 상단 '설정'에서 테스트용 API 키를 입력해주세요.");
+                }
+                
+                // 정상적인 서버/Vercel 배포 환경일 경우 프록시 서버 호출
+                response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            }
+
+            const contentType = response.headers.get("content-type");
+            if (!contentType || !contentType.includes("application/json")) {
+                throw new Error("서버에서 올바르지 않은 응답이 왔습니다. 로컬에서 실행 중이거나 배포 설정에 문제가 있습니다.");
+            }
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || `에러 상태 코드: ${response.status}`);
+            }
+            
+            if (result.candidates && result.candidates.length > 0) {
+                return result.candidates[0].content.parts[0].text;
+            } else {
+                throw new Error("응답 내용이 비어있습니다.");
+            }
+        }
     </script>
 </body>
 </html>
