@@ -93,7 +93,7 @@
             scroll-behavior: smooth;
         }
 
-        /* 챗봇(인물) 메시지 스타일 */
+        /* 챗봇 메시지 스타일 */
         .message-row-bot {
             display: flex;
             align-items: flex-start;
@@ -139,7 +139,7 @@
             word-break: break-word;
         }
 
-        /* 사용자(학생) 메시지 스타일 */
+        /* 사용자 메시지 스타일 */
         .message-row-user {
             display: flex;
             align-items: flex-end;
@@ -167,7 +167,7 @@
             margin-bottom: 2px;
         }
 
-        /* 시스템 안내 메시지 */
+        /* 안내 메시지 */
         .system-message {
             background-color: rgba(255, 255, 255, 0.8);
             border-left: 4px solid #fef01b;
@@ -243,7 +243,7 @@
             box-shadow: none;
         }
 
-        /* 설정 모달창 */
+        /* 설정 모달 */
         .modal-overlay {
             position: absolute;
             top: 0;
@@ -289,7 +289,7 @@
             box-sizing: border-box;
         }
         
-        /* 타이핑 인디케이터 */
+        /* 타이핑 애니메이션 */
         .typing-indicator {
             display: none;
             align-items: center;
@@ -473,7 +473,6 @@
                     <select id="character-select" class="form-select" onchange="updateCharacterPreview()">
                         <option value="sejong" selected>세종대왕 (조선 4대 왕)</option>
                         <option value="leesoonsin">이순신 (조선 중기 무신)</option>
-                        <option value="gildong">홍길동 (고전소설 인물)</option>
                         <option value="custom">직접 입력...</option>
                     </select>
                 </div>
@@ -508,7 +507,6 @@
     </div>
 
     <script>
-        // 전역 상태
         let chatHistory = [];
         let currentGrade = "4";
         let currentCharacterId = "sejong";
@@ -689,12 +687,11 @@
             const bubbleDiv = document.createElement('div');
             bubbleDiv.className = 'bubble-bot';
             
-            // 💡 마크다운 기호 제거 로직 추가
-            // ** 굵게 표시 제거, # 등 불필요한 기호 제거
-            let cleanText = text.replace(/\*\*(.*?)\*\*/g, '$1'); // **텍스트** -> 텍스트 로 변경 (볼드 효과 없앰)
-            cleanText = cleanText.replace(/#/g, ''); // # 기호 제거
-            cleanText = cleanText.replace(/\*/g, ''); // 혹시 남은 * 기호 제거
-            cleanText = cleanText.replace(/\n/g, '<br>'); // 줄바꿈 처리
+            // 마크다운 문법 제거 및 정돈
+            let cleanText = text.replace(/\*\*(.*?)\*\*/g, '$1');
+            cleanText = cleanText.replace(/#/g, '');
+            cleanText = cleanText.replace(/\*/g, '');
+            cleanText = cleanText.replace(/\n/g, '<br>');
             
             bubbleDiv.innerHTML = cleanText;
             
@@ -791,7 +788,6 @@
                 default: gradeInstruction = "대상은 초등학생입니다. 눈높이에 맞춰 짧고 간결하게 대답해주세요.";
             }
 
-            // 💡 시스템 프롬프트 대폭 수정: 길이 제한 강화 및 마크다운 금지 지시
             const systemPrompt = `
 당신은 교육용 챗봇입니다. 아래의 인물 역할을 철저히 연기해야 합니다.
 
@@ -814,8 +810,8 @@ ${gradeInstruction}
                     parts: [{ text: systemPrompt }]
                 },
                 generationConfig: {
-                    temperature: 0.6, // 답변의 일관성을 위해 살짝 낮춤
-                    maxOutputTokens: 250, // 최대 생성 토큰 수도 대폭 줄여서 긴 답변 방지
+                    temperature: 0.6,
+                    maxOutputTokens: 250,
                 }
             };
 
@@ -823,19 +819,18 @@ ${gradeInstruction}
             let response;
 
             if (testApiKey) {
-                // 미리보기 환경에서 직접 API 호출
+                // 미리보기 및 인라인 테스트용 구글 직통 호출
                 response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${testApiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
             } else {
-                // 미리보기(blob/file) 환경이면서 API 키가 없는 경우 에러 처리
                 if (window.location.protocol === 'blob:' || window.location.protocol === 'file:') {
                     throw new Error("미리보기 화면에서는 백엔드에 연결할 수 없습니다. 우측 상단 '설정'에서 테스트용 API 키를 입력해주세요.");
                 }
                 
-                // 정상적인 서버/Vercel 배포 환경일 경우 프록시 서버 호출
+                // Vercel 배포 시 서버리스 백엔드로 프록시 호출
                 response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -845,7 +840,7 @@ ${gradeInstruction}
 
             const contentType = response.headers.get("content-type");
             if (!contentType || !contentType.includes("application/json")) {
-                throw new Error("서버에서 올바르지 않은 응답이 왔습니다. 로컬에서 실행 중이거나 배포 설정에 문제가 있습니다.");
+                throw new Error("서버에서 올바르지 않은 응답이 왔습니다.");
             }
 
             const result = await response.json();
