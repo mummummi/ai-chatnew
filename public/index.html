@@ -796,12 +796,12 @@
             
             let gradeInstruction = "";
             switch(currentGrade) {
-                case "1": gradeInstruction = "대상은 초등학교 1학년(8살)입니다. 아주 쉽고 다정한 어휘로, 아이들의 눈높이에 맞는 적당한 길이로 대답하세요."; break;
-                case "2": gradeInstruction = "대상은 초등학교 2학년(9살)입니다. 쉬운 단어와 구체적이고 친숙한 예시를 들어, 이해하기 편한 길이로 대답하세요."; break;
-                case "3": gradeInstruction = "대상은 초등학교 3학년(10살)입니다. 초등학교 기초 어휘를 사용하여, 흥미를 잃지 않을 정도의 적절한 길이로 대답하세요."; break;
+                case "1": gradeInstruction = "대상은 초등학교 1학년(8살)입니다. 아주 쉽고 다정한 어휘로, 아이들의 눈높이에 맞게 설명해주세요."; break;
+                case "2": gradeInstruction = "대상은 초등학교 2학년(9살)입니다. 쉬운 단어와 구체적이고 친숙한 예시를 들어 설명해주세요."; break;
+                case "3": gradeInstruction = "대상은 초등학교 3학년(10살)입니다. 초등학교 기초 어휘를 사용하여 흥미롭게 설명해주세요."; break;
                 case "4": gradeInstruction = "대상은 초등학교 4학년(11살)입니다. 묻는 말에 명확하게 대답하되, 학년 수준에 맞는 상세한 설명을 제공하세요."; break;
                 case "5": gradeInstruction = "대상은 초등학교 5학년(12살)입니다. 역사적 사실과 배경을 포함하여, 흐름을 이해할 수 있도록 논리적으로 설명하세요."; break;
-                case "6": gradeInstruction = "대상은 초등학교 6학년(13살)입니다. 장황하지 않으면서도 인과관계와 역사적 교훈이 담긴 깊이 있는 대답을 제공하세요."; break;
+                case "6": gradeInstruction = "대상은 초등학교 6학년(13살)입니다. 인과관계와 역사적 교훈이 담긴 깊이 있는 대답을 제공하세요."; break;
                 default: gradeInstruction = "대상은 초등학생입니다. 눈높이에 맞춰 친절하게 대답해주세요.";
             }
 
@@ -828,7 +828,7 @@ ${gradeInstruction}
                 },
                 generationConfig: {
                     temperature: 0.7,
-                    maxOutputTokens: 1024, // 글자 수 제한을 대폭 늘려 중간에 끊기지 않도록 수정
+                    maxOutputTokens: 2048, // 글자 수 제한을 2048로 대폭 늘려 중간에 끊기는 현상 원천 차단
                 }
             };
 
